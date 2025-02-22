@@ -15,36 +15,6 @@ if (!process.env.GOOGLE_DOC_EMAIL
     || !process.env.FROM_WHATSAPP)
     throw new Error('Missing environment variables')
 
-/* WHO */
-const serviceAccountAuth = new JWT({ email: process.env.GOOGLE_DOC_EMAIL, key: process.env.GOOGLE_DOC_PRIVATE_KEY, scopes: ['https://www.googleapis.com/auth/spreadsheets'] });
-const doc = new GoogleSpreadsheet(process.env.GOOGLE_DOC_ID, serviceAccountAuth);
-
-const userSchema = zod.object({
-    phone: zod.number(),
-    startDate: zod.date(),
-    name: zod.string(),
-    identifier: zod.number()
-})
-
-type User = zod.infer<typeof userSchema>
-
-async function getUsers() {
-    console.log('Getting users from Google Sheet...');
-
-    await doc.loadInfo();
-    const sheet = doc.sheetsByIndex[0];
-    const rows = await sheet.getRows({ limit: sheet.rowCount, offset: 0 });
-
-    if (!rows?.length) throw new Error('No rows found')
-
-    console.log(`Found ${rows.length} rows of users, parsing...`);
-    return rows.map((row) => {
-        const { ['state date']: startDate, ...rest } = row.toObject();
-        return userSchema.parse({ ...rest, startDate });
-    })
-}
-
-
 /* WHEN */
 function isInSchedule() {
     const now = moment();
@@ -61,29 +31,58 @@ function isInSchedule() {
     }
 }
 
+/* WHO */
+const serviceAccountAuth = new JWT({ email: process.env.GOOGLE_DOC_EMAIL, key: process.env.GOOGLE_DOC_PRIVATE_KEY, scopes: ['https://www.googleapis.com/auth/spreadsheets'] });
+const doc = new GoogleSpreadsheet(process.env.GOOGLE_DOC_ID, serviceAccountAuth);
+
+const userSchema = zod.object({
+    phone: zod.number(),
+    startDate: zod.date(),
+    name: zod.string(),
+    identifier: zod.number()
+})
+
+type User = zod.infer<typeof userSchema>
+
 function isInPeriod({ startDate }: User): boolean {
     const PERIOD_LENGTH = 10;
-    console.log(`Runing shouldSendMessage for ${moment(startDate).format('DD/MM/YYYY')}`)
     const now = moment().startOf('day');
     const momentStartDate = moment(startDate).startOf('day');
     const diff = now.diff(momentStartDate, 'days');
 
-    if (!diff) {
-        console.log(`It's the start date, ${momentStartDate.format('DD/MM/YYYY')}`);
-        return true
-    }
+    // We are before the start date
+    if (diff < 0) return false
 
-    if (diff < 0) {
-        console.log(`It's not the start date yet, ${momentStartDate.format('DD/MM/YYYY')}`);
-        return false
-    }
-    if (diff >= PERIOD_LENGTH) {
-        console.log(`It's been more than ${PERIOD_LENGTH} days since the start date, ${momentStartDate.format('DD/MM/YYYY')}`);
-        return false
-    }
+    // We are more than PERIOD_LENGTH days after the start date
+    if (diff >= PERIOD_LENGTH) return false
 
-    console.log(`It's day ${diff} of the period, ${momentStartDate.format('DD/MM/YYYY')}`);
+    // We are in the period at day (0 - 9)
     return true
+}
+
+async function getUsers() {
+    console.log('Getting users from Google Sheet...');
+
+    await doc.loadInfo();
+    const sheet = doc.sheetsByIndex[0];
+    const rows = await sheet.getRows({ limit: sheet.rowCount, offset: 0 });
+
+    if (!rows?.length) throw new Error('No rows found')
+
+    console.log(`Found ${rows.length} rows of users, parsing...`);
+
+    const users = rows.map((row) => {
+        const { ['state date']: startDate, ...rest } = row.toObject();
+        return userSchema.parse({ ...rest, startDate });
+    })
+
+    console.log(`Parsed ${users.length} users`);
+
+    const usersToRemind = users.filter(isInPeriod);
+
+    console.log(`Found ${usersToRemind.length} users in period`);
+
+    return usersToRemind
 }
 
 /* WHAT */
@@ -92,8 +91,6 @@ const message = Handlebars.compile<User>(`הי {{name}},
     https://HaifaCATRC.eu.qualtrics.com/jfe/form/SV_8984AzWw99Zrf3o
     מספר המשתתף שלך הוא {{identifier}}
     תודה ונתראה בדיווח הבא!`);
-
-
 
 /* HOW */
 const client = twilio(process.env.ACCOUNT_SID, process.env.AUTH_TOKEN);
@@ -111,19 +108,15 @@ async function sendTo(user: User) {
 /* HANDLER */
 export async function handler() {
     const date = moment()
-    
+
     if (!isInSchedule()) {
         console.log(`Not in schedule at ${date.format('DD/MM/YYYY HH:mm:ss')}`);
         return
     }
-    
+
     console.log(`In schedule at ${date.format('DD/MM/YYYY HH:mm:ss')}`);
 
-    const users = (await getUsers()).filter(isInPeriod);
-
-    console.log(`Found ${users.length} users in period`);
-
-    for (const user of users) {
+    for (const user of await getUsers()) {
         try {
             await sendTo(user)
         } catch (e) {
