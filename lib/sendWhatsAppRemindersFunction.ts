@@ -39,7 +39,7 @@ const userSchema = zod.object({
     phone: zod.number(),
     startDate: zod.date(),
     name: zod.string(),
-    identifier: zod.number()
+    identifier: zod.union([zod.string(), zod.number()]),
 })
 
 type User = zod.infer<typeof userSchema>
@@ -72,8 +72,8 @@ async function getUsers() {
     console.log(`Found ${rows.length} rows of users, parsing...`);
 
     const users = rows.map((row) => {
-        const { ['state date']: startDate, ...rest } = row.toObject();
-        return userSchema.parse({ ...rest, startDate });
+        const { ['state date']: startDate, phone, ...rest } = row.toObject();
+        return userSchema.parse({ ...rest, startDate, phone: Number(phone) });
     })
 
     console.log(`Parsed ${users.length} users`);
