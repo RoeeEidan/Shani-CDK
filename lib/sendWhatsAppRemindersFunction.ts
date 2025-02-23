@@ -39,12 +39,12 @@ const userSchema = zod.object({
     phone: zod.number(),
     startDate: zod.date(),
     name: zod.string(),
-    identifier: zod.union([zod.string(), zod.number()]),
+    identifier: zod.string(),
 })
 
 type User = zod.infer<typeof userSchema>
 
-function isInPeriod({ startDate }: User): boolean {
+function isInPeriod({ startDate, name }: User): boolean {
     const PERIOD_LENGTH = 10;
     const now = moment().startOf('day');
     const momentStartDate = moment(startDate).startOf('day');
@@ -56,6 +56,7 @@ function isInPeriod({ startDate }: User): boolean {
     // We are more than PERIOD_LENGTH days after the start date
     if (diff >= PERIOD_LENGTH) return false
 
+    console.log(`User ${name} is in period, diff: ${diff}`);
     // We are in the period at day (0 - 9)
     return true
 }
@@ -72,8 +73,13 @@ async function getUsers() {
     console.log(`Found ${rows.length} rows of users, parsing...`);
 
     const users = rows.map((row) => {
-        const { ['state date']: startDate, phone, ...rest } = row.toObject();
-        return userSchema.parse({ ...rest, startDate, phone: Number(phone) });
+        const { ['start date']: startDate, phone, identifier, name } = row.toObject();
+        return userSchema.parse({
+            name: String(name),
+            startDate: new Date(startDate),
+            phone: Number(phone),
+            identifier: String(identifier)
+        });
     })
 
     console.log(`Parsed ${users.length} users`);
