@@ -25,6 +25,7 @@ export class ShaniCdkStack extends Stack {
       runtime: Runtime.NODEJS_LATEST,
       entry: './lib/sendReminders.ts',
       handler: 'default',
+      retryAttempts: 0,
       environment: {
         GOOGLE_DOC_EMAIL: String(process.env.GOOGLE_DOC_EMAIL),
         GOOGLE_DOC_ID: String(process.env.GOOGLE_DOC_ID),
