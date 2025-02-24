@@ -18,21 +18,19 @@ export class ShaniCdkStack extends cdk.Stack {
       || !process.env.GOOGLE_DOC_ID
       || !process.env.GOOGLE_DOC_PRIVATE_KEY
       || !process.env.ACCOUNT_SID
-      || !process.env.AUTH_TOKEN
-      || !process.env.FROM_WHATSAPP)
+      || !process.env.AUTH_TOKEN)
       throw new Error('Missing environment variables')
 
     const sendWhatsAppReminders = new NodejsFunction(this, 'SendWhatsAppReminders', {
       runtime: Runtime.NODEJS_LATEST,
-      entry: './lib/sendWhatsAppRemindersFunction.ts',
+      entry: './lib/sendReminders.ts',
       handler: 'default',
       environment: {
         GOOGLE_DOC_EMAIL: String(process.env.GOOGLE_DOC_EMAIL),
         GOOGLE_DOC_ID: String(process.env.GOOGLE_DOC_ID),
         GOOGLE_DOC_PRIVATE_KEY: String(process.env.GOOGLE_DOC_PRIVATE_KEY),
         ACCOUNT_SID: String(process.env.ACCOUNT_SID),
-        AUTH_TOKEN: String(process.env.AUTH_TOKEN),
-        FROM_WHATSAPP: String(process.env.FROM_WHATSAPP)
+        AUTH_TOKEN: String(process.env.AUTH_TOKEN)
       }
     });
 

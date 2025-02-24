@@ -11,7 +11,6 @@ describe('ShaniCdkStack', () => {
         process.env.GOOGLE_DOC_PRIVATE_KEY = 'GOOGLE_DOC_PRIVATE_KEY';
         process.env.ACCOUNT_SID = 'ACCOUNT_SID';
         process.env.AUTH_TOKEN = 'AUTH_TOKEN';
-        process.env.FROM_WHATSAPP = 'FROM_WHATSAPP';
 
         const stack = new ShaniCdk.ShaniCdkStack(new cdk.App(), 'MyTestStack');
         const template = Template.fromStack(stack);
@@ -23,8 +22,7 @@ describe('ShaniCdkStack', () => {
                     GOOGLE_DOC_ID: 'GOOGLE_DOC_ID',
                     GOOGLE_DOC_PRIVATE_KEY: 'GOOGLE_DOC_PRIVATE_KEY',
                     ACCOUNT_SID: 'ACCOUNT_SID',
-                    AUTH_TOKEN: 'AUTH_TOKEN',
-                    FROM_WHATSAPP: 'FROM_WHATSAPP'
+                    AUTH_TOKEN: 'AUTH_TOKEN'
                 }
             }
         });
@@ -59,7 +57,6 @@ describe('ShaniCdkStack', () => {
             delete process.env.GOOGLE_DOC_PRIVATE_KEY
             delete process.env.ACCOUNT_SID
             delete process.env.AUTH_TOKEN
-            delete process.env.FROM_WHATSAPP
             new ShaniCdk.ShaniCdkStack(new cdk.App(), 'MyTestStack');
         }).toThrow('Missing environment variables');
     })
