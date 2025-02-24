@@ -55,17 +55,17 @@ export class ShaniCdkStack extends Stack {
     alarmTopic.addSubscription(new EmailSubscription('roeeeidan@gmail.com'));
 
     // Create a CloudWatch alarm for the Lambda function errors
-    const alarm = sendWhatsAppReminders.metricErrors().createAlarm(this, 'SendWhatsAppRemindersAlarm', {
-      threshold: 1,
-      evaluationPeriods: 1,
-      alarmName: 'SendWhatsAppRemindersAlarm',
-      comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
-      treatMissingData: TreatMissingData.NOT_BREACHING,
-      actionsEnabled: true,
-      alarmDescription: 'Alarm when the function errors',
-    });
-
-    // Add the SNS topic as an action for the alarm
-    alarm.addAlarmAction(new SnsAction(alarmTopic));
+    sendWhatsAppReminders
+      .metricErrors()
+      .createAlarm(this, 'SendWhatsAppRemindersAlarm', {
+        threshold: 0,
+        evaluationPeriods: 1,
+        alarmName: 'SendWhatsAppRemindersAlarm',
+        comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
+        treatMissingData: TreatMissingData.NOT_BREACHING,
+        actionsEnabled: true,
+        alarmDescription: `Alarm when the number of errors is greater than 0, indicating a failure in <a href="https://us-west-2.console.aws.amazon.com/lambda/home?region=us-west-2#/functions/ShaniCdkStack-SendWhatsAppReminders27BD0614-smJMo62qJzCC?subtab=asyncInvoke&tab=monitoring">the Lambda function</a>.`
+      })
+      .addAlarmAction(new SnsAction(alarmTopic))
   }
 }
