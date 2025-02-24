@@ -14,25 +14,15 @@ export class ShaniCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    if (!process.env.GOOGLE_DOC_EMAIL
-      || !process.env.GOOGLE_DOC_ID
-      || !process.env.GOOGLE_DOC_PRIVATE_KEY
-      || !process.env.ACCOUNT_SID
-      || !process.env.AUTH_TOKEN)
-      throw new Error('Missing environment variables')
+    const { GOOGLE_DOC_EMAIL, GOOGLE_DOC_ID, GOOGLE_DOC_PRIVATE_KEY, ACCOUNT_SID, AUTH_TOKEN } = process.env
+    if (!GOOGLE_DOC_EMAIL || !GOOGLE_DOC_ID || !GOOGLE_DOC_PRIVATE_KEY || !ACCOUNT_SID || !AUTH_TOKEN) throw new Error('Missing environment variables')
 
     const sendWhatsAppReminders = new NodejsFunction(this, 'SendWhatsAppReminders', {
       runtime: Runtime.NODEJS_LATEST,
       entry: './lib/sendReminders.ts',
       handler: 'default',
       retryAttempts: 0,
-      environment: {
-        GOOGLE_DOC_EMAIL: String(process.env.GOOGLE_DOC_EMAIL),
-        GOOGLE_DOC_ID: String(process.env.GOOGLE_DOC_ID),
-        GOOGLE_DOC_PRIVATE_KEY: String(process.env.GOOGLE_DOC_PRIVATE_KEY),
-        ACCOUNT_SID: String(process.env.ACCOUNT_SID),
-        AUTH_TOKEN: String(process.env.AUTH_TOKEN)
-      }
+      environment: { GOOGLE_DOC_EMAIL, GOOGLE_DOC_ID, GOOGLE_DOC_PRIVATE_KEY, ACCOUNT_SID, AUTH_TOKEN }
     });
 
     const target = new LambdaFunction(sendWhatsAppReminders);
