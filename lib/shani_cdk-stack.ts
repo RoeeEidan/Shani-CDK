@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { Stack, StackProps } from 'aws-cdk-lib';
+import { Duration, Stack, StackProps } from 'aws-cdk-lib';
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events';
 import { LambdaFunction } from 'aws-cdk-lib/aws-events-targets';
 import { Runtime } from 'aws-cdk-lib/aws-lambda';
@@ -18,6 +18,7 @@ export class ShaniCdkStack extends Stack {
     if (!GOOGLE_DOC_EMAIL || !GOOGLE_DOC_ID || !GOOGLE_DOC_PRIVATE_KEY || !ACCOUNT_SID || !AUTH_TOKEN) throw new Error('Missing environment variables')
 
     const sendWhatsAppReminders = new NodejsFunction(this, 'SendWhatsAppReminders', {
+      timeout: Duration.minutes(3),
       runtime: Runtime.NODEJS_LATEST,
       entry: './lib/sendReminders.ts',
       handler: 'default',
