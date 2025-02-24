@@ -12,8 +12,6 @@ const doc = new GoogleSpreadsheet(docId, new JWT({ email: docEmail, key: docKey,
 const client = twilio(twSid, swToken);
 
 export default async function sendReminders() {
-    const date = moment()
-
     console.log('Getting users from Google Sheet...');
 
     await doc.loadInfo();
@@ -34,6 +32,7 @@ export default async function sendReminders() {
 
     console.log(`Found ${users.length} users to send messages to...`);
 
+    let failed: string[] = []
     for (const { name, phone, identifier } of users) {
         console.log(`Sending message to ${name}...`);
         try {
@@ -48,9 +47,11 @@ export default async function sendReminders() {
             });
             console.log(`Message sent to ${phone}, SID: ${messageRes.sid}`);
         } catch (e) {
-            console.error(`❌ Error sending message to ${name}`);
+            failed.push(name);
             console.error(e)
         }
     };
-    console.log(`✅ Finished job at ${date.format('DD/MM/YYYY HH:mm:ss')}`);
+
+    if (failed.length) throw new Error(`Failed to send ${failed.length}/${users.length} messages. (${failed.join(', ')} failed, check logs for more info)`);
+    console.log(`✅ Finished job`);
 }
