@@ -2,6 +2,7 @@ import twilio from "twilio"
 import moment from 'moment-timezone'
 import { GoogleSpreadsheet } from 'google-spreadsheet'
 import { JWT } from 'google-auth-library'
+import zod from "zod";
 
 moment.tz.setDefault('Asia/Jerusalem');
 
@@ -10,6 +11,13 @@ if (!docEmail || !docId || !docKey || !twSid || !swToken) throw new Error('Missi
 
 const doc = new GoogleSpreadsheet(docId, new JWT({ email: docEmail, key: docKey, scopes: ['https://www.googleapis.com/auth/spreadsheets'] }))
 const client = twilio(twSid, swToken);
+
+const UserSchema = zod.object({
+    name: zod.string(),
+    kickoff: zod.string(),
+    phone: zod.string(),
+    id: zod.string()
+})
 
 export default async function sendReminders() {
     console.log('Getting users from Google Sheet...');
@@ -21,19 +29,16 @@ export default async function sendReminders() {
     console.log(`Found ${rows.length} rows of users, parsing...`);
 
     const users = rows
-        .map((row) => {
-            const { kickoff, phone, identifier, name } = row.toObject();
-            return { name: String(name), kickoff: moment(kickoff), phone: Number(phone), identifier: String(identifier) }
-        })
+        .map(row => UserSchema.parse(row.toObject()))
         .filter(({ kickoff }) => {
-            const diff = moment().startOf('day').diff(kickoff.startOf('day'), 'days');
+            const diff = moment().startOf('day').diff(moment(kickoff).startOf('day'), 'days');
             return diff >= 0 && diff < 10 // 10 days after kickoff
         })
 
     console.log(`Found ${users.length} users to send messages to...`);
 
     let failed: string[] = []
-    for (const { name, phone, identifier } of users) {
+    for (const { name, phone, id } of users) {
         console.log(`Sending message to ${name}...`);
         try {
             const messageRes = await client.messages.create({
@@ -41,7 +46,7 @@ export default async function sendReminders() {
                 body: `הי ${name},
                     את/ה מוזמנ/ת להיכנס כעת דרך הקישור המצורף ולמלא את יומן המעקב.
                     https://HaifaCATRC.eu.qualtrics.com/jfe/form/SV_8984AzWw99Zrf3o
-                    מספר המשתתף שלך הוא ${identifier}
+                    מספר המשתתף שלך הוא ${id}
                     תודה ונתראה בדיווח הבא!`,
                 to: `whatsapp:+${phone}`,
             });
@@ -52,6 +57,6 @@ export default async function sendReminders() {
         }
     };
 
-    if (failed.length) throw new Error(`Failed to send ${failed.length}/${users.length} messages. (${failed.join(', ')} failed, check logs for more info)`);
+    if (failed.length) throw new Error(`Failed to send ${failed.length}/${users.length} messages. (${failed.join(', ')})`);
     console.log(`✅ Finished job`);
 }
