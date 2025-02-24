@@ -9,6 +9,7 @@ import { ComparisonOperator, TreatMissingData } from 'aws-cdk-lib/aws-cloudwatch
 import { Topic } from 'aws-cdk-lib/aws-sns';
 import { EmailSubscription } from 'aws-cdk-lib/aws-sns-subscriptions';
 import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
+import { schedules } from './sendReminders';
 
 export class ShaniCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -19,23 +20,23 @@ export class ShaniCdkStack extends Stack {
 
     const sendWhatsAppReminders = new NodejsFunction(this, 'SendWhatsAppReminders', {
       timeout: Duration.minutes(3),
-      runtime: Runtime.NODEJS_LATEST,
+      runtime: Runtime.NODEJS_22_X,
       entry: './lib/sendReminders.ts',
       handler: 'default',
       retryAttempts: 0,
       environment: { GOOGLE_DOC_EMAIL, GOOGLE_DOC_ID, GOOGLE_DOC_PRIVATE_KEY, ACCOUNT_SID, AUTH_TOKEN }
     });
 
-    const target = new LambdaFunction(sendWhatsAppReminders);
-    /*
-      ISRAEL TIMEZONE UTC+2
-        - Sunday, Wednesday, Saturday at 7, 11, 15, 19, 21, 23 
-        - Monday, Thursday at 8, 12, 15, 18, 20, 23 
-        - Tuesday, Frinday at 9, 12, 16, 19, 22, 23
-    */
-    new Rule(this, 'SundayWhatsAppRule', { schedule: Schedule.cron({ minute: '0', hour: '5,9,13,17,19,21', weekDay: 'SUN,WED,SAT' }) }).addTarget(target);
-    new Rule(this, 'MondayWhatsAppRule', { schedule: Schedule.cron({ minute: '0', hour: '6,10,13,16,18,21', weekDay: 'MON,THU' }) }).addTarget(target);
-    new Rule(this, 'TuesdayWhatsAppRule', { schedule: Schedule.cron({ minute: '0', hour: '7,10,14,17,20,21', weekDay: 'TUE,FRI' }) }).addTarget(target);
+    new Rule(this, 'SendWhatsAppRule', {
+      schedule: Schedule.cron({
+        minute: '0',
+        hour: Array
+          .from(new Set(schedules.flat()))
+          .sort()
+          .map(n => n - 2) // To UTC
+          .join(',')
+      })
+    }).addTarget(new LambdaFunction(sendWhatsAppReminders));
 
     // Create an SNS topic for alarm notifications
     const alarmTopic = new Topic(this, 'AlarmTopic', {

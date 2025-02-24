@@ -6,6 +6,13 @@ import zod from "zod";
 
 moment.tz.setDefault('Asia/Jerusalem');
 
+/* ISRAEL TIMEZONE UTC+2 */
+export const schedules: number[][] = [
+    [7, 11, 15, 19, 22],
+    [8, 12, 15, 18, 21],
+    [9, 12, 16, 19, 22]
+]
+
 const { GOOGLE_DOC_EMAIL: docEmail, GOOGLE_DOC_ID: docId, GOOGLE_DOC_PRIVATE_KEY: docKey, ACCOUNT_SID: twSid, AUTH_TOKEN: swToken } = process.env
 if (!docEmail || !docId || !docKey || !twSid || !swToken) throw new Error('Missing environment variables')
 
@@ -20,8 +27,15 @@ const UserSchema = zod.object({
 })
 
 export default async function sendReminders() {
-    console.log('Getting users from Google Sheet...');
 
+    const now = moment()
+    const schedule = schedules[now.dayOfYear() % schedules.length]
+    if (!schedule.includes(now.hour())) {
+        console.log(`Not the right time to send reminders. Hour: ${now.hour()}, Day of Year: ${now.dayOfYear()}`);
+        return
+    }
+    
+    console.log('Getting users from Google Sheet...');
     await doc.loadInfo();
     const sheet = doc.sheetsByIndex[0];
     const rows = await sheet.getRows({ limit: sheet.rowCount, offset: 0 });
@@ -32,7 +46,7 @@ export default async function sendReminders() {
         .map(row => UserSchema.parse(row.toObject()))
         .filter(({ kickoff }) => {
             const diff = moment().startOf('day').diff(moment(kickoff).startOf('day'), 'days');
-            return diff >= 0 && diff < 10 // 10 days after kickoff
+            return diff >= 0 && diff < 40 // 40 days after kickoff
         })
 
     console.log(`Found ${users.length} users to send messages to...`);
@@ -48,6 +62,7 @@ export default async function sendReminders() {
                     https://HaifaCATRC.eu.qualtrics.com/jfe/form/SV_8984AzWw99Zrf3o
                     מספר המשתתף שלך הוא ${id}
                     תודה ונתראה בדיווח הבא!`,
+                // Get the new message for the 8pm message.
                 to: `whatsapp:+${phone}`,
             });
             console.log(`Message sent to ${phone}, SID: ${messageRes.sid}`);
