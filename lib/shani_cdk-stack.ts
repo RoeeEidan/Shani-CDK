@@ -9,7 +9,7 @@ import { ComparisonOperator, CreateAlarmOptions, TreatMissingData } from 'aws-cd
 import { Topic } from 'aws-cdk-lib/aws-sns';
 import { EmailSubscription } from 'aws-cdk-lib/aws-sns-subscriptions';
 import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
-import { eodTime, schedules } from './config';
+import { eodTime, allDaySchedules } from './config';
 
 export class ShaniCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -37,7 +37,7 @@ export class ShaniCdkStack extends Stack {
     // Add a new Lambda function to send messages
     const sendMessage = new NodejsFunction(this, 'sendMessage', {
       runtime: Runtime.NODEJS_22_X,
-      entry: './lib/sendMessage.ts',
+      entry: './lib/handlers/sendMessage.ts',
       environment: { ACCOUNT_SID, AUTH_TOKEN },
       handler: 'sendMessage',
     });
@@ -62,27 +62,27 @@ export class ShaniCdkStack extends Stack {
       }
     }
     // Add a new Lambda function to trigger daily reminders
-    const triggerDailyReminders = new NodejsFunction(this, 'triggerDailyReminders', {
+    const triggerAllDailyReminders = new NodejsFunction(this, 'triggerAllDailyReminders', {
       ...lambdaTriggersProps,
-      handler: 'triggerDailyReminders',
-      entry: './lib/triggerDailyReminders.ts',
+      handler: 'triggerAllDailyReminders',
+      entry: './lib/handlers/triggerAllDailyReminders.ts',
     });
     new Rule(this, 'SendWhatsAppDailyRemindersRule', {
       schedule: Schedule.cron({
         minute: '0',
         hour: Array
-          .from(new Set(schedules.flat()))
+          .from(new Set(allDaySchedules.flat()))
           .sort()
           .map(n => n - 2) // To UTC
           .join(',')
       })
-    }).addTarget(new LambdaFunction(triggerDailyReminders));
+    }).addTarget(new LambdaFunction(triggerAllDailyReminders));
 
-    triggerDailyReminders
+    triggerAllDailyReminders
       .metricErrors()
-      .createAlarm(this, 'triggerDailyRemindersAlarm', {
+      .createAlarm(this, 'triggerAllDailyRemindersAlarm', {
         ...alarmProps,
-        alarmName: 'triggerDailyRemindersAlarm',
+        alarmName: 'triggerAllDailyRemindersAlarm',
         alarmDescription: `Alarm when the number of errors is greater than 0, indicating a failure in <a href="https://us-west-2.console.aws.amazon.com/lambda/home?region=us-west-2#/functions/ShaniCdkStack-SendWhatsAppReminders27BD0614-smJMo62qJzCC?subtab=asyncInvoke&tab=monitoring">the Lambda function</a>.`
       })
       .addAlarmAction(new SnsAction(alarmTopic))
@@ -92,7 +92,7 @@ export class ShaniCdkStack extends Stack {
     const triggerEndOfDayReminder = new NodejsFunction(this, 'triggerEndOfDayReminder', {
       ...lambdaTriggersProps,
       handler: 'triggerEndOfDayReminder',
-      entry: './lib/triggerEndOfDayReminder.ts',
+      entry: './lib/handlers/triggerEndOfDayReminder.ts',
     });
     new Rule(this, 'SendWhatsAppEndOfDayReminderRule', {
       schedule: Schedule.cron({
@@ -111,7 +111,7 @@ export class ShaniCdkStack extends Stack {
       .addAlarmAction(new SnsAction(alarmTopic))
 
     // Grant explicit invoke permissions
-    sendMessage.grantInvoke(triggerDailyReminders.grantPrincipal);
+    sendMessage.grantInvoke(triggerAllDailyReminders.grantPrincipal);
     sendMessage.grantInvoke(triggerEndOfDayReminder.grantPrincipal);
   }
 }

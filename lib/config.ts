@@ -20,7 +20,7 @@ export const template = {
 }
 
 /*  WHEN IS IT BEING SENT? (ISRAEL TIMEZONE UTC+2) */
-export const schedules: number[][] = [
+export const allDaySchedules: number[][] = [
     [7, 11, 15, 19, 22],
     [8, 12, 15, 18, 21],
     [9, 12, 16, 19, 22],

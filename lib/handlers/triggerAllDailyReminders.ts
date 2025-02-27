@@ -1,11 +1,11 @@
 import moment from 'moment-timezone'
 import { getUsers } from "../helpers/getUsers";
-import { schedules, template } from '../config';
+import { allDaySchedules, template } from '../config';
 import { invokeSendMessage } from '../helpers/invokeSendMessage';
 
-const isInSchedule = () => schedules[moment().dayOfYear() % schedules.length].includes(moment().hour())
+const isInSchedule = () => allDaySchedules[moment().dayOfYear() % allDaySchedules.length].includes(moment().hour())
 
-export async function triggerDailyReminders() {
+export async function triggerAllDailyReminders() {
     if (!isInSchedule()) {
         console.log('❌ Not in schedule, skipping job.');
         return
