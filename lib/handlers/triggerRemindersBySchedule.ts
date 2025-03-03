@@ -5,7 +5,7 @@ import { invokeSendMessage } from '../helpers/invokeSendMessage';
 
 const isInSchedule = () => allDaySchedules[moment().dayOfYear() % allDaySchedules.length].includes(moment().hour())
 
-export async function triggerAllDailyReminders() {
+export async function triggerRemindersBySchedule() {
     if (!isInSchedule()) {
         console.log('❌ Not in schedule, skipping job.');
         return

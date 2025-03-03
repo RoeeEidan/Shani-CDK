@@ -62,10 +62,10 @@ export class ShaniCdkStack extends Stack {
       }
     }
     // Add a new Lambda function to trigger daily reminders
-    const triggerAllDailyReminders = new NodejsFunction(this, 'triggerAllDailyReminders', {
+    const triggerRemindersBySchedule = new NodejsFunction(this, 'triggerRemindersBySchedule', {
       ...lambdaTriggersProps,
-      handler: 'triggerAllDailyReminders',
-      entry: './lib/handlers/triggerAllDailyReminders.ts',
+      handler: 'triggerRemindersBySchedule',
+      entry: './lib/handlers/triggerRemindersBySchedule.ts',
     });
     new Rule(this, 'SendWhatsAppDailyRemindersRule', {
       schedule: Schedule.cron({
@@ -76,42 +76,42 @@ export class ShaniCdkStack extends Stack {
           .map(n => n - 2) // To UTC
           .join(',')
       })
-    }).addTarget(new LambdaFunction(triggerAllDailyReminders));
+    }).addTarget(new LambdaFunction(triggerRemindersBySchedule));
 
-    triggerAllDailyReminders
+    triggerRemindersBySchedule
       .metricErrors()
-      .createAlarm(this, 'triggerAllDailyRemindersAlarm', {
+      .createAlarm(this, 'triggerRemindersByScheduleAlarm', {
         ...alarmProps,
-        alarmName: 'triggerAllDailyRemindersAlarm',
+        alarmName: 'triggerRemindersByScheduleAlarm',
         alarmDescription: `Alarm when the number of errors is greater than 0, indicating a failure in <a href="https://us-west-2.console.aws.amazon.com/lambda/home?region=us-west-2#/functions/ShaniCdkStack-SendWhatsAppReminders27BD0614-smJMo62qJzCC?subtab=asyncInvoke&tab=monitoring">the Lambda function</a>.`
       })
       .addAlarmAction(new SnsAction(alarmTopic))
 
 
     // Add a new Lambda function to send messages
-    const triggerEndOfDayReminder = new NodejsFunction(this, 'triggerEndOfDayReminder', {
+    const triggerOncePerDayReminder = new NodejsFunction(this, 'triggerOncePerDayReminder', {
       ...lambdaTriggersProps,
-      handler: 'triggerEndOfDayReminder',
-      entry: './lib/handlers/triggerEndOfDayReminder.ts',
+      handler: 'triggerOncePerDayReminder',
+      entry: './lib/handlers/triggerOncePerDayReminder.ts',
     });
     new Rule(this, 'SendWhatsAppEndOfDayReminderRule', {
       schedule: Schedule.cron({
-        minute: '0',
-        hour: (eodTime - 2).toString() // ISRAEL TIMEZONE to UTC
+        minute: eodTime.minute.toString(),
+        hour: (eodTime.hour - 2).toString() // ISRAEL TIMEZONE to UTC
       })
-    }).addTarget(new LambdaFunction(triggerEndOfDayReminder));
+    }).addTarget(new LambdaFunction(triggerOncePerDayReminder));
 
-    triggerEndOfDayReminder
+    triggerOncePerDayReminder
       .metricErrors()
-      .createAlarm(this, 'triggerEndOfDayReminderAlarm', {
+      .createAlarm(this, 'triggerOncePerDayReminderAlarm', {
         ...alarmProps,
-        alarmName: 'triggerEndOfDayReminderAlarm',
+        alarmName: 'triggerOncePerDayReminderAlarm',
         alarmDescription: `Alarm when the number of errors is greater than 0, indicating a failure in <a href="https://us-west-2.console.aws.amazon.com/lambda/home?region=us-west-2#/functions/ShaniCdkStack-SendWhatsAppReminders27BD0614-smJMo62qJzCC?subtab=asyncInvoke&tab=monitoring">the Lambda function</a>.`
       })
       .addAlarmAction(new SnsAction(alarmTopic))
 
     // Grant explicit invoke permissions
-    sendMessage.grantInvoke(triggerAllDailyReminders.grantPrincipal);
-    sendMessage.grantInvoke(triggerEndOfDayReminder.grantPrincipal);
+    sendMessage.grantInvoke(triggerRemindersBySchedule.grantPrincipal);
+    sendMessage.grantInvoke(triggerOncePerDayReminder.grantPrincipal);
   }
 }
