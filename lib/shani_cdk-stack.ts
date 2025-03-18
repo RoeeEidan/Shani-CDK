@@ -9,7 +9,7 @@ import { ComparisonOperator, CreateAlarmOptions, TreatMissingData } from 'aws-cd
 import { Topic } from 'aws-cdk-lib/aws-sns';
 import { EmailSubscription } from 'aws-cdk-lib/aws-sns-subscriptions';
 import { SnsAction } from 'aws-cdk-lib/aws-cloudwatch-actions';
-import { eodTime, allDaySchedules } from './config';
+import { oncePerDayTime, allDaySchedules } from './config';
 
 export class ShaniCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
@@ -96,8 +96,8 @@ export class ShaniCdkStack extends Stack {
     });
     new Rule(this, 'SendWhatsAppRemindersOncePerDayRule', {
       schedule: Schedule.cron({
-        minute: eodTime.minute.toString(),
-        hour: (eodTime.hour - 2).toString() // ISRAEL TIMEZONE to UTC
+        minute: oncePerDayTime.minute.toString(),
+        hour: (oncePerDayTime.hour - 2).toString() // ISRAEL TIMEZONE to UTC
       })
     }).addTarget(new LambdaFunction(triggerOncePerDayReminder));
 

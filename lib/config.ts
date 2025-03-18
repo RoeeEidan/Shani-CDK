@@ -11,7 +11,7 @@ export const allDaySchedules: number[][] = [
     [9, 12, 16, 19, 22],
 ]
 
-export const eodTime = {
+export const oncePerDayTime = {
     hour: 9,
     minute: 30
 }
