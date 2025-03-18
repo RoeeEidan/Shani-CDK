@@ -8,7 +8,12 @@ export async function triggerOncePerDayReminder() {
 
     for (const { name, phone, id } of users) {
         console.log(`Invoking sendMessage for ${phone}...`);
-        await invokeSendMessage(phone, template.endOfDay({ name, id }));
+        await invokeSendMessage({
+            phone,
+            id,
+            name,
+            template: template.oncePerDay,
+        });
     }
 
     console.log(`✅ Finished job triggerOncePerDayReminder, sent ${users.length} messages.`);

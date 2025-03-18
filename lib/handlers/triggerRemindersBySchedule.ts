@@ -16,7 +16,12 @@ export async function triggerRemindersBySchedule() {
 
     for (const { name, phone, id } of users) {
         console.log(`Invoking sendMessage for ${phone}...`);
-        await invokeSendMessage(phone, template.onGoing({ name, id }));
+        await invokeSendMessage({
+            id,
+            name,
+            phone, 
+            template: template.onGoing
+        });
     }
 
     console.log(`✅ Finished job, sent ${users.length} messages.`);

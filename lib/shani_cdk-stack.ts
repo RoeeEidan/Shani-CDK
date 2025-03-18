@@ -67,7 +67,7 @@ export class ShaniCdkStack extends Stack {
       handler: 'triggerRemindersBySchedule',
       entry: './lib/handlers/triggerRemindersBySchedule.ts',
     });
-    new Rule(this, 'SendWhatsAppDailyRemindersRule', {
+    new Rule(this, 'SendWhatsAppRemindersByScheduleRule', {
       schedule: Schedule.cron({
         minute: '0',
         hour: Array
@@ -94,7 +94,7 @@ export class ShaniCdkStack extends Stack {
       handler: 'triggerOncePerDayReminder',
       entry: './lib/handlers/triggerOncePerDayReminder.ts',
     });
-    new Rule(this, 'SendWhatsAppEndOfDayReminderRule', {
+    new Rule(this, 'SendWhatsAppRemindersOncePerDayRule', {
       schedule: Schedule.cron({
         minute: eodTime.minute.toString(),
         hour: (eodTime.hour - 2).toString() // ISRAEL TIMEZONE to UTC
