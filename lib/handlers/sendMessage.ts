@@ -30,11 +30,6 @@ export async function sendMessage(event: any) {
 
     console.log(messageInstance)
 
-    // Sleep for 5 seconds
-    await new Promise(resolve => setTimeout(resolve, 5000))
-
-    console.log('after 5 seconds', messageInstance)
-
     if (messageInstance.errorMessage || messageInstance.errorCode) {
         console.error(`Error code from twilio: ${messageInstance.errorCode}`)
         console.error(`Error message from twilio: ${messageInstance.errorMessage}`)

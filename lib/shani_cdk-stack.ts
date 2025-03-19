@@ -39,8 +39,7 @@ export class ShaniCdkStack extends Stack {
       runtime: Runtime.NODEJS_22_X,
       entry: './lib/handlers/sendMessage.ts',
       environment: { ACCOUNT_SID, AUTH_TOKEN },
-      handler: 'sendMessage',
-      timeout: Duration.seconds(10)
+      handler: 'sendMessage'
     });
     sendMessage
       .metricErrors()
