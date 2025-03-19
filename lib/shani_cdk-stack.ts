@@ -40,6 +40,7 @@ export class ShaniCdkStack extends Stack {
       entry: './lib/handlers/sendMessage.ts',
       environment: { ACCOUNT_SID, AUTH_TOKEN },
       handler: 'sendMessage',
+      timeout: Duration.seconds(10)
     });
     sendMessage
       .metricErrors()
