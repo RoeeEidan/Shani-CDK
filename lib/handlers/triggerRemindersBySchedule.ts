@@ -3,6 +3,8 @@ import { getUsers } from "../helpers/getUsers";
 import { allDaySchedules, template } from '../config';
 import { invokeSendMessage } from '../helpers/invokeSendMessage';
 
+moment.tz.setDefault(process.env.TIMEZONE);
+
 const isInSchedule = () => allDaySchedules[moment().dayOfYear() % allDaySchedules.length].includes(moment().hour())
 
 export async function triggerRemindersBySchedule() {

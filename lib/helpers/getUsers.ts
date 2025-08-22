@@ -3,8 +3,8 @@ import { GoogleSpreadsheet } from 'google-spreadsheet'
 import { JWT } from 'google-auth-library'
 import zod from "zod";
 
-const { GOOGLE_DOC_EMAIL, GOOGLE_DOC_ID, GOOGLE_DOC_PRIVATE_KEY, TIMEZONE } = process.env
-if (!GOOGLE_DOC_EMAIL || !GOOGLE_DOC_ID || !GOOGLE_DOC_PRIVATE_KEY) throw new Error('Missing environment variables')
+const { GOOGLE_DOC_EMAIL, GOOGLE_DOC_ID, GOOGLE_DOC_PRIVATE_KEY, TIMEZONE, LENGTH_OF_PROGRAM } = process.env
+if (!GOOGLE_DOC_EMAIL || !GOOGLE_DOC_ID || !GOOGLE_DOC_PRIVATE_KEY || !LENGTH_OF_PROGRAM) throw new Error('Missing environment variables')
 
 moment.tz.setDefault(TIMEZONE);
 
@@ -29,6 +29,6 @@ export async function getUsers() {
         .map(row => userSchema.parse(row.toObject()))
         .filter(({ kickoff }) => {
             const diff = moment().startOf('day').diff(moment(kickoff).startOf('day'), 'days');
-            return diff >= 0 && diff < 40 // 40 days after kickoff
+            return diff >= 0 && diff < Number(LENGTH_OF_PROGRAM)
         })
 }

@@ -18,11 +18,10 @@ const eventSchema = zod.object({
 export async function sendMessage(event: any) {
     const { phone, name, id, template } = eventSchema.parse(event)
 
-    console.log(`Sending message to ${phone}...`);
+    console.log(`Sending message to ${phone}..., variables ${name}, ${id}, ${template}`);
 
     const messageInstance = await twClient.messages.create({
         from: `whatsapp:+${FROM}`,
-        // from: 'XE75df172f772a7f8b5cbea6c3e3857f15',
         contentSid: template,
         contentVariables: JSON.stringify({ name, id }),
         to: `whatsapp:+${phone}`

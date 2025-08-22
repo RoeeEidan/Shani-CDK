@@ -2,8 +2,11 @@
 import * as cdk from 'aws-cdk-lib';
 import { ShaniCdkStack } from '../lib/shani_cdk-stack';
 
-const app = new cdk.App();
-new ShaniCdkStack(app, 'ShaniCdkStack', {
+const { STACK_NAME } = process.env
+if (!STACK_NAME) throw new Error('Missing environment variables')
+
+  const app = new cdk.App();
+new ShaniCdkStack(app, STACK_NAME, {
   /* If you don't specify 'env', this stack will be environment-agnostic.
    * Account/Region-dependent features and context lookups will not work,
    * but a single synthesized template can be deployed anywhere. */

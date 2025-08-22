@@ -1,7 +1,9 @@
 /* WHAT IS BEING SENT?*/
+const {ON_GOING_TEMPLATE, ONCE_PER_DAY_TEMPLATE} = process.env
+if (!ON_GOING_TEMPLATE || !ONCE_PER_DAY_TEMPLATE) throw new Error('Missing environment variables')
 export const template = {
-    onGoing: 'HX60487aa01ff61f37582fe9dddb43f1d5',
-    oncePerDay: 'HXf17381551bd4258e581ee464a31604e7' 
+    onGoing: ON_GOING_TEMPLATE,
+    oncePerDay: ONCE_PER_DAY_TEMPLATE
 }
 
 /*  WHEN IS IT BEING SENT? (ISRAEL TIMEZONE UTC+2) */
@@ -18,4 +20,6 @@ export const oncePerDayTime = {
 // 9:30am ISRAEL TIMEZONE UTC+2
 
 /*  WHO IS IT BEING SENT FROM? */
-export const FROM = 972522166846
+const { FROM_NUMBER } = process.env
+if (!FROM_NUMBER) throw new Error('Missing environment variables')
+export const FROM = Number(FROM_NUMBER)

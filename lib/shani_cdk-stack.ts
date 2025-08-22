@@ -39,7 +39,8 @@ export class ShaniCdkStack extends Stack {
       runtime: Runtime.NODEJS_22_X,
       entry: './lib/handlers/sendMessage.ts',
       environment: { ACCOUNT_SID, AUTH_TOKEN },
-      handler: 'sendMessage'
+      handler: 'sendMessage',
+      timeout: Duration.minutes(3)
     });
     sendMessage
       .metricErrors()
@@ -73,7 +74,7 @@ export class ShaniCdkStack extends Stack {
         hour: Array
           .from(new Set(allDaySchedules.flat()))
           .sort()
-          .map(n => n - 2) // To UTC
+          .map(n => n - 3) // To UTC
           .join(',')
       })
     }).addTarget(new LambdaFunction(triggerRemindersBySchedule));
@@ -97,7 +98,7 @@ export class ShaniCdkStack extends Stack {
     new Rule(this, 'SendWhatsAppRemindersOncePerDayRule', {
       schedule: Schedule.cron({
         minute: oncePerDayTime.minute.toString(),
-        hour: (oncePerDayTime.hour - 2).toString() // ISRAEL TIMEZONE to UTC
+        hour: (oncePerDayTime.hour - 3).toString() // ISRAEL TIMEZONE to UTC
       })
     }).addTarget(new LambdaFunction(triggerOncePerDayReminder));
 
